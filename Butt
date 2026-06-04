@@ -1,0 +1,901 @@
+-- carregar biblioteca 
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+
+-- HUB
+local Window = Fluent:CreateWindow({
+    Title = "GG prime " .. Fluent.Version,
+    TabWidth = 160, 
+    Size = UDim2.fromOffset(580, 460), 
+    Theme = "Dark"
+})
+
+local MainFrame = Window.Root
+
+-- GUI separada (CHAVE DO FIX)
+local BtnGui = Instance.new("ScreenGui")
+BtnGui.Name = "GG_Button_GUI"
+BtnGui.Parent = game.CoreGui
+BtnGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+BtnGui.ResetOnSpawn = false
+
+-- BOTÃO FLUTUANTE
+local OpenBtn = Instance.new("TextButton")
+OpenBtn.Size = UDim2.new(0, 55, 0, 55)
+OpenBtn.Position = UDim2.new(0, 10, 0, 200)
+OpenBtn.Text = "GG"
+OpenBtn.BackgroundColor3 = Color3.fromRGB(30,30,30)
+OpenBtn.TextColor3 = Color3.fromRGB(255,255,255)
+OpenBtn.Visible = false
+OpenBtn.Parent = BtnGui
+OpenBtn.ZIndex = 999999 -- força ficar na frente
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(1,0)
+UICorner.Parent = OpenBtn
+
+-- BOTÃO MINIMIZAR
+local MinBtn = Instance.new("TextButton")
+MinBtn.Size = UDim2.new(0, 40, 0, 40)
+MinBtn.Position = UDim2.new(1, -45, 0, 5)
+MinBtn.Text = "-"
+MinBtn.BackgroundColor3 = Color3.fromRGB(30,30,30)
+MinBtn.TextColor3 = Color3.fromRGB(255,255,255)
+MinBtn.Parent = MainFrame
+
+local UICorner2 = Instance.new("UICorner")
+UICorner2.CornerRadius = UDim.new(0.3,0)
+UICorner2.Parent = MinBtn
+
+-- MINIMIZAR
+MinBtn.MouseButton1Click:Connect(function()
+    MainFrame.Visible = false
+    OpenBtn.Visible = true
+end)
+
+-- ABRIR
+OpenBtn.MouseButton1Click:Connect(function()
+    MainFrame.Visible = true
+    OpenBtn.Visible = false
+end)
+
+-- ABAS
+local Tabs = {
+    Main = Window:AddTab({ Title = "Main" })
+}
+
+Tabs.Main:AddButton({
+    Title = "Teste",
+    Callback = function()
+        print("ok")
+    end
+})
+-- parágrafos 
+Tabs.Main:AddParagraph({ Title = "main", Content = "scripts aqui" })
+
+
+
+-- botões 
+Tabs.Main:AddButton({ Title = "infinite jump", Callback = function() 
+loadstring(game:HttpGet("https://raw.githubusercontent.com/HeyGyt/infjump/main/main"))()
+end })
+
+-- alterador 
+local player = game.Players.LocalPlayer
+
+local autofarm = false
+
+-- ⚙️ CONFIG FÁCIL DE AJUSTAR
+local SETTINGS = {
+    TeleportDelay = 0.35, -- ⏱️ tempo entre cada moeda (anti-kick principal)
+    LoopPause = 1.2,      -- 🔁 pausa entre ciclos completos
+    MaxCoins = 12         -- 🔢 limite de moedas por ciclo
+}
+
+local function getRoot()
+    local char = player.Character or player.CharacterAdded:Wait()
+    return char:WaitForChild("HumanoidRootPart")
+end
+
+local function farmCoins()
+    while autofarm do
+        pcall(function()
+            local root = getRoot()
+            local count = 0
+
+            for _, coin in pairs(workspace:GetDescendants()) do
+                if not autofarm then break end
+
+                if coin.Name == "Coin" or coin.Name == "Coin_Server" then
+                    if coin:IsA("BasePart") then
+                        
+                        -- TP na moeda
+                        root.CFrame = coin.CFrame + Vector3.new(0,2,0)
+                        count += 1
+                        
+                        -- ⏱️ DELAY ENTRE MOEDAS
+                        task.wait(SETTINGS.TeleportDelay)
+
+                        -- 🔢 LIMITE POR LOOP
+                        if count >= SETTINGS.MaxCoins then
+                            break
+                        end
+                    end
+                end
+            end
+        end)
+
+        -- 🔁 PAUSA ENTRE LOOPS
+        task.wait(SETTINGS.LoopPause)
+    end
+end
+
+-- TOGGLE
+local Toggle = Tabs.Main:AddToggle("autofarm", 
+{
+    Title = "Auto Farm (Delay Seguro)", 
+    Description = "Com delay e pausa anti-kick",
+    Default = false,
+
+    Callback = function(state)
+        autofarm = state
+
+        if state then
+            Fluent:Notify({
+                Title = "Autofarm ligado",
+                Content = "Delay ativo (modo seguro)"
+            })
+
+            task.spawn(farmCoins)
+        else
+            Fluent:Notify({
+                Title = "Autofarm desligado",
+                Content = "Parado"
+            })
+        end
+    end 
+})
+
+         
+
+local player = game.Players.LocalPlayer
+local RunService = game:GetService("RunService")
+
+local speedOn = false
+local SPEED = 50 -- ⚡ ajusta aqui (16 = normal)
+
+local function getHumanoid()
+    local char = player.Character or player.CharacterAdded:Wait()
+    return char:WaitForChild("Humanoid")
+end
+
+-- LOOP de speed (anti-reset)
+RunService.RenderStepped:Connect(function()
+    if speedOn then
+        local humanoid = getHumanoid()
+        if humanoid and humanoid.WalkSpeed ~= SPEED then
+            humanoid.WalkSpeed = SPEED
+        end
+    end
+end)
+
+-- TOGGLE
+local Toggle = Tabs.Main:AddToggle("speed boost",
+{
+    Title = "Speed Boost",
+    Description = "Aumenta velocidade (MM2)",
+    Default = false,
+
+    Callback = function(state)
+        speedOn = state
+
+        if state then
+            Fluent:Notify({
+                Title = "Speed Boost ligado",
+                Content = "Velocidade aumentada"
+            })
+        else
+            -- volta ao normal
+            local humanoid = getHumanoid()
+            humanoid.WalkSpeed = 16
+
+            Fluent:Notify({
+                Title = "Speed Boost desligado",
+                Content = "Velocidade normal"
+            })
+        end
+    end
+})
+
+--sliders
+
+local player = game.Players.LocalPlayer
+
+local function getHumanoid()
+    local char = player.Character or player.CharacterAdded:Wait()
+    return char:WaitForChild("Humanoid")
+end
+
+local Slider = Tabs.Main:AddSlider("pulo", 
+{
+    Title = "Força do Pulo",
+    Description = "Ajusta a altura do pulo do jogador",
+    
+    Default = 50,   -- valor padrão bom
+    Min = 20,       -- mínimo jogável
+    Max = 150,      -- máximo forte
+    Rounding = 0,   -- sem travar valores
+    
+    Callback = function(Value)
+        local humanoid = getHumanoid()
+        humanoid.JumpPower = Value
+        
+        print("Pulo ajustado para:", Value)
+    end
+})
+
+
+
+
+local player = game.Players.LocalPlayer
+
+local function getHumanoid()
+    local char = player.Character or player.CharacterAdded:Wait()
+    return char:WaitForChild("Humanoid")
+end
+
+local Slider = Tabs.Main:AddSlider("velocidade", 
+{
+    Title = "Velocidade",
+    Description = "Ajusta a velocidade do jogador",
+    
+    Default = 16,   -- velocidade normal do Roblox
+    Min = 16,       -- mínimo padrão
+    Max = 200,      -- bem rápido
+    Rounding = 0,   -- ajuste suave
+    
+    Callback = function(Value)
+        local humanoid = getHumanoid()
+        humanoid.WalkSpeed = Value
+        
+        print("Velocidade ajustada para:", Value)
+    end
+})
+
+local Tabs = {
+    Main = Window:AddTab({ Title = "esp" })
+}
+
+-- parágrafos 
+Tabs.Main:AddParagraph({ Title = "Eps", Content = "Eps aqui" })
+
+--sliders
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local espAtivo = false
+local highlightAtual = nil
+
+local function limparESP()
+	if highlightAtual then
+		highlightAtual:Destroy()
+		highlightAtual = nil
+	end
+end
+
+local function pegarMurder()
+	for _, player in pairs(Players:GetPlayers()) do
+		if player ~= Players.LocalPlayer then
+			local char = player.Character
+			if char then
+				-- Detecta pela faca (Knife)
+				if char:FindFirstChild("Knife") or player.Backpack:FindFirstChild("Knife") then
+					return player
+				end
+			end
+		end
+	end
+	return nil
+end
+
+local function aplicarESP()
+	local murder = pegarMurder()
+
+	if murder and murder.Character then
+		if not highlightAtual or highlightAtual.Parent ~= murder.Character then
+			limparESP()
+
+			local highlight = Instance.new("Highlight")
+			highlight.FillColor = Color3.fromRGB(255, 0, 0) -- vermelho
+			highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+			highlight.FillTransparency = 0.3
+			highlight.Parent = murder.Character
+
+			highlightAtual = highlight
+		end
+	end
+end
+
+-- Loop
+RunService.RenderStepped:Connect(function()
+	if espAtivo then
+		aplicarESP()
+	end
+end)
+
+-- Toggle
+local Toggle = Tabs.Main:AddToggle("ESP murder",
+{
+    Title = "ESP Murder",
+    Description = "assassino fica vermelho",
+    Default = false,
+
+    Callback = function(state)
+        espAtivo = state
+
+        if state then
+            Fluent:Notify({ Title = "ESP ligado", Content = "Murder destacado" })
+        else
+            limparESP()
+            Fluent:Notify({ Title = "ESP desligado", Content = "Removido" })
+        end
+    end
+})
+
+
+
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local espAtivo = false
+local highlightAtual = nil
+
+local function limparESP()
+	if highlightAtual then
+		highlightAtual:Destroy()
+		highlightAtual = nil
+	end
+end
+
+local function pegarSheriff()
+	for _, player in pairs(Players:GetPlayers()) do
+		if player ~= Players.LocalPlayer then
+			local char = player.Character
+			if char then
+				-- Detecta pela arma (Gun)
+				if char:FindFirstChild("Gun") or player.Backpack:FindFirstChild("Gun") then
+					return player
+				end
+			end
+		end
+	end
+	return nil
+end
+
+local function aplicarESP()
+	local sheriff = pegarSheriff()
+
+	if sheriff and sheriff.Character then
+		if not highlightAtual or highlightAtual.Parent ~= sheriff.Character then
+			limparESP()
+
+			local highlight = Instance.new("Highlight")
+			highlight.FillColor = Color3.fromRGB(0, 0, 255) -- azul
+			highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+			highlight.FillTransparency = 0.3
+			highlight.Parent = sheriff.Character
+
+			highlightAtual = highlight
+		end
+	end
+end
+
+-- Loop
+RunService.RenderStepped:Connect(function()
+	if espAtivo then
+		aplicarESP()
+	end
+end)
+
+-- Toggle
+local Toggle = Tabs.Main:AddToggle("ESP sheriff",
+{
+    Title = "ESP Sheriff",
+    Description = "xerife fica azul",
+    Default = false,
+
+    Callback = function(state)
+        espAtivo = state
+
+        if state then
+            Fluent:Notify({ Title = "ESP ligado", Content = "Sheriff destacado" })
+        else
+            limparESP()
+            Fluent:Notify({ Title = "ESP desligado", Content = "Removido" })
+        end
+    end
+})
+
+
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local espAtivo = false
+local highlights = {}
+
+local function limparESP()
+	for _, h in pairs(highlights) do
+		if h then
+			h:Destroy()
+		end
+	end
+	highlights = {}
+end
+
+local function ehInocente(player)
+	local char = player.Character
+	if not char then return false end
+
+	-- Se NÃO tiver Knife nem Gun = inocente
+	if char:FindFirstChild("Knife") or player.Backpack:FindFirstChild("Knife") then
+		return false
+	end
+	
+	if char:FindFirstChild("Gun") or player.Backpack:FindFirstChild("Gun") then
+		return false
+	end
+
+	return true
+end
+
+local function aplicarESP()
+	for _, player in pairs(Players:GetPlayers()) do
+		if player ~= Players.LocalPlayer then
+			if ehInocente(player) then
+				if player.Character and not highlights[player] then
+					
+					local highlight = Instance.new("Highlight")
+					highlight.FillColor = Color3.fromRGB(0, 255, 0) -- verde
+					highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+					highlight.FillTransparency = 0.5
+					highlight.Parent = player.Character
+
+					highlights[player] = highlight
+				end
+			else
+				-- Se deixou de ser inocente, remove
+				if highlights[player] then
+					highlights[player]:Destroy()
+					highlights[player] = nil
+				end
+			end
+		end
+	end
+end
+
+-- Loop
+RunService.RenderStepped:Connect(function()
+	if espAtivo then
+		aplicarESP()
+	end
+end)
+
+-- Toggle
+local Toggle = Tabs.Main:AddToggle("ESP inocente",
+{
+    Title = "ESP Inocente",
+    Description = "inocentes ficam verdes",
+    Default = false,
+
+    Callback = function(state)
+        espAtivo = state
+
+        if state then
+            Fluent:Notify({ Title = "ESP ligado", Content = "Inocentes destacados" })
+        else
+            limparESP()
+            Fluent:Notify({ Title = "ESP desligado", Content = "Removido" })
+        end
+    end
+})
+
+
+
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local espAtivo = false
+local highlightAtual = nil
+local sheriffOriginal = nil
+
+local function limparESP()
+	if highlightAtual then
+		highlightAtual:Destroy()
+		highlightAtual = nil
+	end
+end
+
+-- Detecta sheriff original no começo da rodada
+local function detectarSheriff()
+	for _, player in pairs(Players:GetPlayers()) do
+		if player ~= Players.LocalPlayer then
+			if player.Backpack:FindFirstChild("Gun") then
+				sheriffOriginal = player
+			end
+		end
+	end
+end
+
+local function pegarHeroi()
+	for _, player in pairs(Players:GetPlayers()) do
+		if player ~= Players.LocalPlayer then
+			local char = player.Character
+			if char then
+				if char:FindFirstChild("Gun") or player.Backpack:FindFirstChild("Gun") then
+					
+					-- Se NÃO for o sheriff original = herói
+					if player ~= sheriffOriginal then
+						return player
+					end
+				end
+			end
+		end
+	end
+	return nil
+end
+
+local function aplicarESP()
+	local heroi = pegarHeroi()
+
+	if heroi and heroi.Character then
+		if not highlightAtual or highlightAtual.Parent ~= heroi.Character then
+			limparESP()
+
+			local highlight = Instance.new("Highlight")
+			highlight.FillColor = Color3.fromRGB(255, 255, 0) -- amarelo
+			highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+			highlight.FillTransparency = 0.3
+			highlight.Parent = heroi.Character
+
+			highlightAtual = highlight
+		end
+	end
+end
+
+-- Detecta sheriff no início
+task.spawn(function()
+	while true do
+		detectarSheriff()
+		task.wait(5)
+	end
+end)
+
+-- Loop
+RunService.RenderStepped:Connect(function()
+	if espAtivo then
+		aplicarESP()
+	end
+end)
+
+-- Toggle
+local Toggle = Tabs.Main:AddToggle("ESP heroi",
+{
+    Title = "ESP Herói",
+    Description = "quem pega a arma fica amarelo",
+    Default = false,
+
+    Callback = function(state)
+        espAtivo = state
+
+        if state then
+            Fluent:Notify({ Title = "ESP ligado", Content = "Herói destacado" })
+        else
+            limparESP()
+            Fluent:Notify({ Title = "ESP desligado", Content = "Removido" })
+        end
+    end
+})
+
+
+
+
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+
+local espAtivo = false
+local highlightGun = nil
+
+local function limparESP()
+	if highlightGun then
+		highlightGun:Destroy()
+		highlightGun = nil
+	end
+end
+
+local function pegarGunDrop()
+	for _, obj in pairs(Workspace:GetDescendants()) do
+		-- Procura pela arma dropada
+		if obj.Name == "GunDrop" or obj.Name == "Gun" then
+			if obj:IsA("Part") or obj:IsA("Model") then
+				return obj
+			end
+		end
+	end
+	return nil
+end
+
+local function aplicarESP()
+	local gun = pegarGunDrop()
+
+	if gun then
+		if not highlightGun or highlightGun.Parent ~= gun then
+			limparESP()
+
+			local highlight = Instance.new("Highlight")
+			highlight.FillColor = Color3.fromRGB(255, 255, 0) -- amarelo
+			highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+			highlight.FillTransparency = 0.2
+			highlight.Parent = gun
+
+			highlightGun = highlight
+		end
+	end
+end
+
+-- Loop
+RunService.RenderStepped:Connect(function()
+	if espAtivo then
+		aplicarESP()
+	end
+end)
+
+-- Toggle
+local Toggle = Tabs.Main:AddToggle("ESP gun",
+{
+    Title = "ESP Gun",
+    Description = "mostra arma dropada",
+    Default = false,
+
+    Callback = function(state)
+        espAtivo = state
+
+        if state then
+            Fluent:Notify({ Title = "ESP ligado", Content = "Gun destacada" })
+        else
+            limparESP()
+            Fluent:Notify({ Title = "ESP desligado", Content = "Removido" })
+        end
+    end
+})
+
+Tabs.assassino = Window:AddTab({ Title = "assassino" })
+
+
+--sliders
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local killAll = false
+
+local Toggle = Tabs.assassino:AddToggle("kill all", 
+{
+    Title = "Kill All", 
+    Description = "Teleporta e tenta eliminar todos",
+    Default = false,
+
+    Callback = function(state)
+        killAll = state
+
+        if state then
+            Fluent:Notify({ Title = "Kill All", Content = "Ligado" })
+
+            task.spawn(function()
+                while killAll do
+                    for _, player in pairs(Players:GetPlayers()) do
+                        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                            
+                            local char = LocalPlayer.Character
+                            if char and char:FindFirstChild("HumanoidRootPart") then
+                                
+                                -- Teleporta até o player
+                                char.HumanoidRootPart.CFrame = player.Character.HumanoidRootPart.CFrame + Vector3.new(0,0,2)
+
+                                -- Equipa ferramenta (knife/gun)
+                                for _, tool in pairs(LocalPlayer.Backpack:GetChildren()) do
+                                    if tool:IsA("Tool") then
+                                        tool.Parent = char
+                                    end
+                                end
+
+                                -- Ataca (funciona em alguns jogos)
+                                local tool = char:FindFirstChildOfClass("Tool")
+                                if tool then
+                                    tool:Activate()
+                                end
+
+                                task.wait(0.3)
+                            end
+                        end
+                    end
+                    task.wait(0.5)
+                end
+            end)
+
+        else
+            Fluent:Notify({ Title = "Kill All", Content = "Desligado" })
+        end
+    end 
+})
+
+
+
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+
+local auraOn = false
+local RANGE = 15 -- alcance da aura
+
+local function getChar()
+    return LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+end
+
+local function getTool()
+    local char = getChar()
+    return char:FindFirstChildOfClass("Tool")
+end
+
+RunService.RenderStepped:Connect(function()
+    if not auraOn then return end
+
+    local char = getChar()
+    local root = char:FindFirstChild("HumanoidRootPart")
+    local tool = getTool()
+
+    if not root or not tool then return end
+
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            
+            local targetRoot = player.Character:FindFirstChild("HumanoidRootPart")
+            
+            if targetRoot then
+                local distance = (root.Position - targetRoot.Position).Magnitude
+                
+                if distance <= RANGE then
+                    -- TP rápido atrás do player
+                    root.CFrame = targetRoot.CFrame * CFrame.new(0,0,2)
+                    
+                    -- Ataca
+                    tool:Activate()
+                    
+                    task.wait(0.1)
+                end
+            end
+        end
+    end
+end)
+
+-- TOGGLE
+Tabs.assassino:AddToggle("kill aura",
+{
+    Title = "Kill Aura",
+    Description = "mata players próximos automaticamente",
+    Default = false,
+
+    Callback = function(state)
+        auraOn = state
+
+        if state then
+            Fluent:Notify({ Title = "Kill Aura", Content = "Ligado" })
+        else
+            Fluent:Notify({ Title = "Kill Aura", Content = "Desligado" })
+        end
+    end
+})
+
+
+
+
+local Toggle = Tabs.Main:AddToggle("fling", {
+    Title = "Fling",
+    Description = "Fling forte com giro + teleporte",
+    Default = false,
+    Callback = function(state)
+        if state then
+            Fluent:Notify({ Title = "Fling Ligado", Content = "Modo assassino ativado 🔥" })
+            StartFling()
+        else
+            Fluent:Notify({ Title = "Fling Desligado", Content = "Parando..." })
+            StopFling()
+        end
+    end
+})
+
+-- ==================== VARIÁVEIS ====================
+local flingEnabled = false
+local target = nil
+local connection = nil
+local rootPart = nil
+
+-- ==================== FUNÇÃO PRINCIPAL ====================
+function StartFling()
+    flingEnabled = true
+    local player = game.Players.LocalPlayer
+    rootPart = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    
+    if not rootPart then return end
+
+    -- Pega o alvo mais próximo (ou você pode mudar para selecionar específico)
+    local function getClosestTarget()
+        local closest, dist = nil, math.huge
+        for _, plr in ipairs(game.Players:GetPlayers()) do
+            if plr \~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                local d = (plr.Character.HumanoidRootPart.Position - rootPart.Position).Magnitude
+                if d < dist and d < 300 then -- alcance máximo
+                    dist = d
+                    closest = plr.Character.HumanoidRootPart
+                end
+            end
+        end
+        return closest
+    end
+
+    connection = game:GetService("RunService").Heartbeat:Connect(function()
+        if not flingEnabled then return end
+        
+        target = getClosestTarget()
+        if not target then return end
+
+        -- === COLISÃO ===
+        rootPart.CanCollide = false
+        if target.Parent:FindFirstChild("HumanoidRootPart") then
+            target.Parent.HumanoidRootPart.CanCollide = false
+        end
+
+        -- === TELEPORTE PARA O ALVO (leve offset) ===
+        local tpPos = target.Position + target.CFrame.LookVector * -3 + Vector3.new(0, 2, 0)
+        rootPart.CFrame = CFrame.new(tpPos) * CFrame.Angles(0, math.rad(math.random(1,360)), 0)
+
+        -- === FORÇA + LANÇAMENTO FORTE ===
+        local bv = Instance.new("BodyVelocity")
+        bv.Name = "FlingBV"
+        bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+        bv.Velocity = (target.Position - rootPart.Position).Unit * 250 + Vector3.new(0, 50, 0) -- força pra cima + direção
+        bv.Parent = rootPart
+
+        -- === GIRO FORTE (mesmo com fly parado) ===
+        local bav = Instance.new("BodyAngularVelocity")
+        bav.Name = "FlingBAV"
+        bav.MaxTorque = Vector3.new(1e5, 1e5, 1e5)
+        bav.AngularVelocity = Vector3.new(0, 300, math.random(-200,200)) -- giro insano
+        bav.Parent = rootPart
+
+        -- Limpeza automática dos bodies
+        game:GetService("Debris"):AddItem(bv, 0.1)
+        game:GetService("Debris"):AddItem(bav, 0.1)
+    end)
+end
+
+function StopFling()
+    flingEnabled = false
+    if connection then
+        connection:Disconnect()
+        connection = nil
+    end
+    
+    -- Limpa bodies restantes
+    if rootPart then
+        for _, v in ipairs(rootPart:GetChildren()) do
+            if v:IsA("BodyVelocity") or v:IsA("BodyAngularVelocity") then
+                v:Destroy()
+            end
+        end
+        rootPart.CanCollide = true
+    end
+end
